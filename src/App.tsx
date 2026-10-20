@@ -63,6 +63,7 @@ const ASSETS_MANIFEST: Record<string, string> = {
   hazard_net: 'assets/images/hazard_ghost_net.png',
   item_shield: 'assets/images/item_bubble_shield.png',
   item_jellyfish: 'assets/images/item_golden_jellyfish.png',
+  safe_passage: 'assets/images/item_safe_passage.png',
   ui_heart: 'assets/images/ui_heart_icon.png',
 };
 
@@ -1550,6 +1551,17 @@ export default function App() {
           ctx.rect(gapLeft - 2, netTop - 16, gapWidth + 4, netH + 32);
         }
         ctx.fill();
+
+        // Polished safe-passage artwork keeps the route readable during play.
+        drawAsset(
+          ctx,
+          assets.safe_passage,
+          gapLeft - 18,
+          netTop - 22,
+          gapWidth + 36,
+          netH + 44,
+          () => {},
+        );
 
         // Directional Water Current Flow Streaks
         ctx.lineWidth = 2;
