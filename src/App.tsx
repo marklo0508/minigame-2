@@ -1376,6 +1376,22 @@ export default function App() {
       ctx.restore();
     });
 
+    // 3.5. MOVING CAUSTICS AND CURRENT CONTOURS
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.12;
+    for (let band = 0; band < 5; band++) {
+      const y = ((time * (10 + band * 3) + band * 150) % (canvasHeight + 220)) - 110;
+      const wave = Math.sin(time * 0.7 + band) * 24;
+      ctx.strokeStyle = band % 2 === 0 ? '#7de8e0' : '#6fc9f5';
+      ctx.lineWidth = band % 2 === 0 ? 2 : 1;
+      ctx.beginPath();
+      ctx.moveTo(-30, y);
+      ctx.bezierCurveTo(canvasWidth * 0.28, y - 26 + wave, canvasWidth * 0.68, y + 32 - wave, canvasWidth + 30, y - 10);
+      ctx.stroke();
+    }
+    ctx.restore();
+
     // 4. WATER RIPPLES / SHIELD POP WAVES
     ripplesRef.current.forEach((r) => {
       ctx.save();
@@ -1811,6 +1827,21 @@ export default function App() {
       ctx.restore();
     });
 
+    // 11. EDGE VIGNETTE FOR A SOFT, CINEMATIC PLAYFIELD
+    const vignette = ctx.createRadialGradient(
+      canvasWidth / 2,
+      canvasHeight * 0.44,
+      canvasHeight * 0.16,
+      canvasWidth / 2,
+      canvasHeight * 0.46,
+      canvasHeight * 0.82,
+    );
+    vignette.addColorStop(0, 'rgba(0, 18, 34, 0)');
+    vignette.addColorStop(0.72, 'rgba(0, 12, 28, 0.08)');
+    vignette.addColorStop(1, 'rgba(0, 6, 18, 0.42)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
     ctx.restore();
   };
 
@@ -1853,7 +1884,7 @@ export default function App() {
         backgroundColor: '#05192d',
         fontFamily: THEME.fontFamily,
       }}
-      className="relative w-screen h-screen overflow-hidden flex items-center justify-center select-none touch-none">
+      className="game-root relative w-screen h-screen overflow-hidden flex items-center justify-center select-none touch-none">
       {/* Background audio loop */}
       <BackgroundMusic
         url={BACKGROUND_MUSIC_URL}
@@ -1884,7 +1915,7 @@ export default function App() {
           height: '100%',
           maxHeight: '100vh',
         }}
-        className="relative shadow-2xl flex items-center justify-center bg-slate-950">
+        className="game-shell relative shadow-2xl flex items-center justify-center bg-slate-950 overflow-hidden">
         <canvas
           ref={canvasRef}
           width={canvasWidth}
@@ -1898,22 +1929,19 @@ export default function App() {
             {/* Upper row: Hearts, Sanctuary Timer, Score, Menu buttons */}
             <div className="flex items-center justify-between gap-2">
               {/* Hearts Health Counter */}
-              <div className="flex items-center gap-1 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-cyan-500/30 shadow-md">
+              <div className="hud-card flex items-center gap-1.5 px-3 py-1.5 rounded-2xl">
                 {Array.from({length: getConfig('startingHealth') as number}).map((_, idx) => (
-                  <span
+                  <img
                     key={idx}
-                    className={`text-xl transition-all duration-300 ${
-                      idx < gameState.lives
-                        ? 'opacity-100 scale-100 filter drop-shadow'
-                        : 'opacity-20 scale-75 grayscale'
-                    }`}>
-                    ❤️
-                  </span>
+                    src="assets/images/ui_heart_icon.png"
+                    alt={idx < gameState.lives ? '生命值' : '失去的生命值'}
+                    className={idx < gameState.lives ? 'hud-heart opacity-100 scale-100' : 'hud-heart hud-heart--empty scale-75'}
+                  />
                 ))}
               </div>
 
               {/* Sanctuary Survival Countdown */}
-              <div className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-cyan-500/30 shadow-md text-cyan-300 text-xs md:text-sm font-black">
+              <div className="hud-card hud-card--timer flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-cyan-200 text-xs md:text-sm font-black">
                 <span>🌊 庇護所倒數:</span>
                 <span className="font-mono text-sm md:text-base text-yellow-300">
                   {remainingSeconds}s
@@ -1921,7 +1949,7 @@ export default function App() {
               </div>
 
               {/* Score Display */}
-              <div className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-cyan-500/30 shadow-md text-amber-300 text-xs md:text-sm font-black">
+              <div className="hud-card hud-card--score flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-amber-200 text-xs md:text-sm font-black">
                 <span>分數:</span>
                 <span className="font-mono text-white text-sm md:text-base">
                   {gameState.score}
@@ -1951,7 +1979,7 @@ export default function App() {
                   }}
                   title="海洋保育小知識"
                   aria-label="海洋保育小知識"
-                  className="w-8 h-8 bg-emerald-600/90 text-white rounded-full flex items-center justify-center border border-emerald-400/50 shadow transition-all active:scale-90">
+                  className="hud-action ocean-button w-8 h-8 bg-emerald-600/90 text-white rounded-full flex items-center justify-center border border-emerald-300/60 shadow transition-all active:scale-90">
                   <BookOpen size={15} />
                 </button>
 
@@ -1963,7 +1991,7 @@ export default function App() {
                   }}
                   title="選單"
                   aria-label="選單"
-                  className="w-8 h-8 bg-slate-800/90 text-cyan-300 rounded-full flex items-center justify-center border border-cyan-700/60 shadow transition-all active:scale-90">
+                  className="hud-action ocean-button w-8 h-8 bg-slate-800/90 text-cyan-200 rounded-full flex items-center justify-center border border-cyan-500/50 shadow transition-all active:scale-90">
                   <Pause size={15} />
                 </button>
               </div>
@@ -2096,15 +2124,16 @@ export default function App() {
       {/* 1. START SCREEN */}
       {gameState.status === 'START' && (
         <MenuOverlay tone="neutral" zIndex={40}>
-          <div className="bg-slate-900/95 border-2 border-cyan-500/60 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col items-center w-full max-w-md text-center backdrop-blur-md">
-            <div className="w-20 h-20 mb-3 relative flex items-center justify-center">
+          <div className="ocean-panel p-6 md:p-8 rounded-3xl flex flex-col items-center w-full max-w-md text-center">
+            <div className="pulse-ring w-20 h-20 mb-3 relative flex items-center justify-center rounded-full">
               <img
                 src="assets/images/player_sea_turtle.png"
                 alt="海龜"
                 className="w-20 h-20 object-contain drop-shadow-lg animate-bounce"
               />
             </div>
-            <h1 className="text-3xl md:text-4xl font-black mb-2 text-cyan-400 drop-shadow">
+            <div className="brand-kicker mb-2">TURTLE TIDE · OCEAN GUARDIAN</div>
+            <h1 className="shimmer-title text-3xl md:text-4xl font-black mb-2 drop-shadow">
               海龜守護之戰
             </h1>
             <p className="text-slate-300 text-sm md:text-base mb-5 leading-relaxed">
@@ -2133,7 +2162,7 @@ export default function App() {
                   initGame();
                 }}
                 autoFocus
-                className="w-full bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 px-6 py-3.5 rounded-2xl font-black text-lg md:text-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 active:scale-95">
+                className="ocean-button w-full bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 px-6 py-3.5 rounded-2xl font-black text-lg md:text-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 active:scale-95">
                 <Play size={22} fill="currentColor" />
                 開始守護海龜
               </button>
@@ -2155,7 +2184,7 @@ export default function App() {
       {/* 2. GAME OVER SCREEN */}
       {gameState.status === 'GAME_OVER' && (
         <MenuOverlay tone="danger" zIndex={40}>
-          <div className="bg-slate-900/95 border-2 border-red-500/80 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col items-center w-full max-w-md text-center backdrop-blur-md">
+          <div className="ocean-panel ocean-panel--danger p-6 md:p-8 rounded-3xl flex flex-col items-center w-full max-w-md text-center">
             <span className="text-5xl mb-2">🐢💔</span>
             <h2 className="text-2xl md:text-3xl font-black text-red-400 mb-2">
               哎呀！小海龜受傷了
@@ -2201,7 +2230,7 @@ export default function App() {
       {/* 3. VICTORY SCREEN */}
       {gameState.status === 'VICTORY' && (
         <MenuOverlay tone="victory" zIndex={40}>
-          <div className="bg-slate-900/95 border-2 border-emerald-500/80 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col items-center w-full max-w-md text-center backdrop-blur-md">
+          <div className="ocean-panel ocean-panel--victory p-6 md:p-8 rounded-3xl flex flex-col items-center w-full max-w-md text-center">
             <span className="text-5xl mb-2 animate-bounce">🐢🏆</span>
             <h2 className="text-2xl md:text-3xl font-black text-emerald-400 mb-2">
               恭喜抵達潔淨海洋庇護所！
@@ -2224,7 +2253,7 @@ export default function App() {
                   setIsCertOpen(true);
                 }}
                 autoFocus
-                className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 transition-all active:scale-95">
+                className="ocean-button w-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 transition-all active:scale-95">
                 <Award size={20} />
                 🎓 領取榮譽海洋守護者證書
               </button>
@@ -2246,7 +2275,7 @@ export default function App() {
       {/* 4. OCEAN GUARDIAN CERTIFICATE MODAL */}
       {isCertOpen && (
         <MenuOverlay tone="neutral" zIndex={60}>
-          <div className="w-full max-w-lg bg-slate-900 border-2 border-amber-500/80 rounded-3xl p-5 md:p-6 shadow-2xl flex flex-col items-center backdrop-blur-md max-h-[92vh] overflow-y-auto">
+          <div className="ocean-panel w-full max-w-lg rounded-3xl p-5 md:p-6 flex flex-col items-center max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between w-full mb-3 pb-2 border-b border-slate-800">
               <div className="flex items-center gap-2 text-amber-400 font-black text-lg">
                 <Award size={22} />
@@ -2407,7 +2436,7 @@ export default function App() {
       {/* 5. MARINE KNOWLEDGE HANDBOOK MODAL */}
       {isKnowledgeOpen && (
         <MenuOverlay tone="neutral" zIndex={60}>
-          <div className="w-full max-w-lg bg-slate-900 border-2 border-emerald-500/80 rounded-3xl p-5 md:p-6 shadow-2xl flex flex-col items-center backdrop-blur-md max-h-[92vh] overflow-y-auto">
+          <div className="ocean-panel ocean-panel--victory w-full max-w-lg rounded-3xl p-5 md:p-6 flex flex-col items-center max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between w-full mb-3 pb-2 border-b border-slate-800">
               <div className="flex items-center gap-2 text-emerald-400 font-black text-lg">
                 <BookOpen size={22} />
@@ -2525,7 +2554,7 @@ export default function App() {
       {/* 6. PAUSE / GAME MENU OVERLAY */}
       {isGameMenuOpen && (
         <MenuOverlay tone="neutral" zIndex={50}>
-          <div className="w-full max-w-md bg-slate-900 border-2 border-cyan-500/80 rounded-3xl p-6 shadow-2xl flex flex-col items-center backdrop-blur-md">
+          <div className="ocean-panel w-full max-w-md rounded-3xl p-6 flex flex-col items-center">
             <h2 className="text-2xl md:text-3xl font-black text-cyan-400 mb-4 tracking-wide">
               遊戲選單
             </h2>
@@ -2654,7 +2683,7 @@ export default function App() {
       {/* 7. HOW TO PLAY OVERLAY */}
       {isHowToPlayOpen && (
         <MenuOverlay tone="neutral" zIndex={60}>
-          <div className="w-full max-w-md bg-slate-900 border-2 border-emerald-500/80 rounded-3xl p-6 shadow-2xl flex flex-col items-center backdrop-blur-md text-left">
+          <div className="ocean-panel ocean-panel--victory w-full max-w-md rounded-3xl p-6 flex flex-col items-center text-left">
             <h2 className="text-2xl font-black text-emerald-400 mb-4 text-center">
               海龜守護之戰玩法說明
             </h2>
