@@ -1,0 +1,87 @@
+{
+  "title": "Turtle Tide Peril",
+  "hook": "Dodge dense ocean waste swiftly",
+  "game_overview": "Guide an agile sea turtle through treacherous polluted waters, dodging dense torrents of floating ocean garbage in an intense reflex survival test.",
+  "artstyle": "cartoon",
+  "genre": "arcade",
+  "winning_condition": "\u5728\u6975\u9ad8\u5bc6\u5ea6\u7684\u6d77\u6d0b\u5783\u573e\u98a8\u66b4\u4e2d\u5b58\u6d3b 60 \u79d2\uff081\u5206\u9418\uff09\uff0c\u6210\u529f\u62b5\u9054\u6f54\u6de8\u6d77\u6d0b\u5e87\u8b77\u6240\u3002",
+  "losing_condition": "Lose all 5 health points by colliding with floating marine debris.",
+  "player_mode": "single_player",
+  "supported_orientations": [
+    "portrait",
+    "landscape",
+    "tall",
+    "wide",
+    "any"
+  ],
+  "input_methods": [
+    "touch",
+    "mouse",
+    "keyboard",
+    "dpad"
+  ],
+  "score_options": {
+    "score_type": "points",
+    "score_order": "higher_is_better"
+  },
+  "low_end_device_support": true,
+  "mobile_playable": true,
+  "tv_playable": true,
+  "language": [
+    "zh-TW",
+    "zh-HK",
+    "zh"
+  ],
+  "content_descriptors": [],
+  "controls": [
+    {
+      "input": "\u624b\u6307\u62d6\u66f3 / \u6ed1\u9f20\u62d6\u66f3",
+      "action": "\u76f4\u63a5\u6309\u4f4f\u4e26\u62d6\u52d5\u6d77\u9f9c\u5728\u6d77\u4e2d\u9748\u6d3b\u6ed1\u884c\uff0c\u8eb2\u907f\u5bc6\u96c6\u7684\u6d77\u6d0b\u5783\u573e\u3002"
+    },
+    {
+      "input": "\u65b9\u5411\u9375 / WASD / \u865b\u64ec\u6416\u687f",
+      "action": "\u8f14\u52a9\u516b\u65b9\u5411\u5fae\u8abf\u79fb\u52d5\u6d77\u9f9c\u3002"
+    },
+    {
+      "input": "\u7a7a\u767d\u9375 / \u9ede\u64ca\u300c\u885d\u523a\u300d\u6309\u9215",
+      "action": "\u91cb\u653e\u77ed\u66ab\u7121\u6575\u7684\u9f9c\u6bbc\u885d\u523a\u6280\u80fd\uff08\u51b7\u537b\u6642\u9593 3 \u79d2\uff09\u3002"
+    }
+  ],
+  "sections": [
+    {
+      "title": "Design Pillars",
+      "content": "1. Extreme Bullet-Hell Reflexes: Dense, dynamic hazard storms testing tight maneuverability. 2. Environmental Urgency: Vibrant marine aesthetics contrasting against stark artificial pollution. 3. Immediate Tactile Control: Direct finger-drag responsiveness paired with emergency Shell Dash mechanics.",
+      "summary": "Core guiding principles for gameplay and feel."
+    },
+    {
+      "title": "Core Loop",
+      "content": "The player pilots a sea turtle through deep ocean waters. Hazards (plastic bags, glass bottles, sharp straws, and ghost nets) spawn in increasingly dense, fast patterns. Players dodge trash to maintain their 5 HP, collect golden jellyfish for score multipliers, and grab clean oxygen bubbles for momentary shielding. As time elapses, garbage velocity and density spike exponentially until reaching the 180s Sanctuary threshold.",
+      "summary": "Moment-to-moment survival cycle."
+    },
+    {
+      "title": "Core Mechanics & Hazards",
+      "content": "1. 5-Hit Armor System: The turtle starts with 5 HP; each debris collision subtracts 1 HP and triggers 1.5s invincibility flashing. 2. Hazard Spectrum: Floating Plastic Bags (swirling sinusoidal drift), Heavy Glass Bottles (rapid sinking vertical plunges), Plastic Straws (high-speed dart barrages), Ghost Nets (wide horizontal sweep lines requiring tight gap navigation). 3. Power Pickups: Oxygen Bubble (absorbs 1 hit) and Golden Jellyfish (bonus score & slight speed boost).",
+      "summary": "Health, mobility, and hazard classification."
+    },
+    {
+      "title": "Movement & Scrolling Alignment",
+      "content": "Scrolling Axis: Vertical (downward ocean current pushing debris from top to bottom, with horizontal cross-currents). Asset Orientation: Player turtle faces upward (12 o'clock default) with fluid tilt leaning towards movement direction. Movement Physics: Direct kinematic drag-following with smooth interpolation and slight inertial drift on keyboard/D-pad release. Camera: Full canvas playfield locked to view bounds.",
+      "summary": "Ocean current traversal mechanics."
+    },
+    {
+      "title": "Visual Hierarchy & Layering",
+      "content": "Layer 1 (Background): Procedural deep turquoise-to-navy ocean gradient with soft caustic sunlight rays and drifting ambient micro-bubbles. Layer 2 (Playfield): Brightly saturated hazards with warning halos (white translucent bags, sharp green glass, neon yellow/pink straws, murky ghost nets) and the high-contrast player turtle. Layer 3 (HUD Overlay): Non-intrusive top-anchored 5-Heart health bar, survival timer, and score multiplier meter.",
+      "summary": "Layer separation and hazard affordance."
+    },
+    {
+      "title": "Juice & Game Feel",
+      "content": "Anticipation Juice: Red indicator beacons on the screen edge signaling incoming high-speed bottle drops or ghost net sweeps. State Change Juice: Bubble wake trails trailing from the turtle's flippers during dash, red screen vignette pulse on taking damage. Impact Juice: Tactile micro screen-shake on collision, water shockwave ripple upon collecting oxygen bubbles, and celebratory coral burst upon sanctuary victory.",
+      "summary": "Dynamic sensory feedback systems."
+    },
+    {
+      "title": "Virtual Touch Controls Implementation",
+      "content": "Supports full native pointer drag directly on the turtle, alongside optional bottom-anchored Virtual D-Pad and Dash action button for mobile users. Buttons use touch-none CSS, pointer-events-auto on interactive elements, and robust pointerup/pointercancel event bindings to guarantee zero stuck states.",
+      "summary": "Mobile touch controls and direct drag integration."
+    }
+  ]
+}
