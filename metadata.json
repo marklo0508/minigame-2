@@ -1,0 +1,8 @@
+{
+  "name": "Turtle Tide Peril",
+  "description": "Guide an agile sea turtle through treacherous polluted waters, dodging dense torrents of floating ocean garbage in an intense reflex survival test.",
+  "prompt": "Ocean turtle survival arcade minigame dodging marine debris and plastic waste.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

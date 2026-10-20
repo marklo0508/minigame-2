@@ -44,7 +44,8 @@ export function usePlayground() {
       try {
         const isSandboxPreview =
           window.location.hostname === 'test.com' ||
-          (window as any).__PLAYGROUND_PREVIEW__ === true;
+          (window as any).__PLAYGROUND_PREVIEW__ === true ||
+          !window.location.hostname.endsWith('google.com');
 
         if (isSandboxPreview) {
           console.log(
@@ -54,7 +55,13 @@ export function usePlayground() {
           const module = await import('./playground-fake');
           (window as any).PlaygroundSDK = module.FakePlaygroundSDK;
         } else {
-          await loadScript();
+          try {
+            await loadScript();
+          } catch (e) {
+            console.warn('Playground SDK script load failed, falling back to Fake SDK', e);
+            const module = await import('./playground-fake');
+            (window as any).PlaygroundSDK = module.FakePlaygroundSDK;
+          }
         }
 
         if ((window as any).PlaygroundSDK) {
