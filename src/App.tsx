@@ -61,6 +61,7 @@ const ASSETS_MANIFEST: Record<string, string> = {
   hazard_bottle: 'assets/images/hazard_glass_bottle.png',
   hazard_straw: 'assets/images/hazard_plastic_straw.png',
   hazard_net: 'assets/images/hazard_ghost_net.png',
+  safe_path: 'assets/images/current_safe_path.png',
   item_shield: 'assets/images/item_bubble_shield.png',
   item_jellyfish: 'assets/images/item_golden_jellyfish.png',
   ui_heart: 'assets/images/ui_heart_icon.png',
@@ -592,10 +593,16 @@ export default function App() {
 
   // Helper to spawn floating popup text
   const addFloater = (x: number, y: number, text: string, color: string, size = 18) => {
+    // Keep closely timed score and damage messages from painting over one another.
+    const nearbyCount = floatersRef.current.filter(
+      (floater) => Math.abs(floater.x - x) < 100 && Math.abs(floater.y - y) < 64,
+    ).length;
+    const stackOffset = Math.min(nearbyCount, 3) * (size + 7);
+
     floatersRef.current.push({
       id: `fl_${Date.now()}_${Math.random()}`,
       x,
-      y,
+      y: y - stackOffset,
       vy: -65,
       text,
       color,
@@ -762,6 +769,7 @@ export default function App() {
     const targetSurvivalTime = getConfig('targetSurvivalTime') as number;
     const progress = Math.min(1, time / targetSurvivalTime);
     const roll = Math.random();
+    const netAlreadyOnScreen = hazardsRef.current.some((hazard) => hazard.type === 'NET');
 
     if (roll < 0.32) {
       // 1. Plastic Bag: sinusoidal float
@@ -830,7 +838,7 @@ export default function App() {
         rotation: angle,
         vRot: 0,
       });
-    } else {
+    } else if (!netAlreadyOnScreen) {
       // 4. Ghost Fishing Net: Screen-wide obstacle wave with a safe navigable gap
       const netW = canvasWidth;
       const netH = getConfig('assetGhostNetHeight') as number;
@@ -1514,6 +1522,12 @@ export default function App() {
     });
 
     // 7. DRAW HAZARDS
+    // Only the closest net gets a label. Multiple labels were stacking when waves
+    // crossed the viewport and made the safe route harder to read.
+    const frontNetId = hazardsRef.current
+      .filter((hazard) => hazard.type === 'NET' && hazard.y + hazard.height > 0 && hazard.y < canvasHeight)
+      .sort((a, b) => b.y - a.y)[0]?.id;
+
     hazardsRef.current.forEach((h) => {
       if (h.warningTimer && h.warningTimer > 0) return;
 
@@ -1535,46 +1549,48 @@ export default function App() {
         // SAFE PASSAGE WATER CHANNEL
         ctx.save();
         const gapPulse = 0.88 + Math.sin(time * 4) * 0.12;
-        const channelGrad = ctx.createLinearGradient(gapLeft, netTop - 20, gapRight, netTop - 20);
-        channelGrad.addColorStop(0, `rgba(6, 182, 212, ${0.12 * gapPulse})`);
-        channelGrad.addColorStop(0.2, `rgba(34, 211, 238, ${0.28 * gapPulse})`);
-        channelGrad.addColorStop(0.5, `rgba(52, 211, 153, ${0.35 * gapPulse})`);
-        channelGrad.addColorStop(0.8, `rgba(34, 211, 238, ${0.28 * gapPulse})`);
-        channelGrad.addColorStop(1, `rgba(6, 182, 212, ${0.12 * gapPulse})`);
+        const safePathAsset = assets['safe_path'];
+        const hasSafePathAsset = Boolean(
+          safePathAsset && safePathAsset.complete && safePathAsset.naturalWidth > 0,
+        );
 
-        ctx.fillStyle = channelGrad;
-        ctx.beginPath();
-        if (typeof ctx.roundRect === 'function') {
-          ctx.roundRect(gapLeft - 2, netTop - 16, gapWidth + 4, netH + 32, 10);
+        if (hasSafePathAsset) {
+          // The generated sanctuary artwork carries the water flow and buoys,
+          // so the safe route reads as a real passage instead of a filled box.
+          ctx.globalAlpha = 0.88 + gapPulse * 0.08;
+          drawAsset(
+            ctx,
+            safePathAsset,
+            gapLeft - 8,
+            netTop - 16,
+            gapWidth + 16,
+            netH + 32,
+            () => {},
+          );
+          ctx.globalAlpha = 1;
         } else {
-          ctx.rect(gapLeft - 2, netTop - 16, gapWidth + 4, netH + 32);
-        }
-        ctx.fill();
+          const channelGrad = ctx.createLinearGradient(gapLeft, netTop - 20, gapRight, netTop - 20);
+          channelGrad.addColorStop(0, `rgba(6, 182, 212, ${0.04 * gapPulse})`);
+          channelGrad.addColorStop(0.2, `rgba(34, 211, 238, ${0.09 * gapPulse})`);
+          channelGrad.addColorStop(0.5, `rgba(52, 211, 153, ${0.14 * gapPulse})`);
+          channelGrad.addColorStop(0.8, `rgba(34, 211, 238, ${0.09 * gapPulse})`);
+          channelGrad.addColorStop(1, `rgba(6, 182, 212, ${0.04 * gapPulse})`);
 
-        // Directional Water Current Flow Streaks
-        ctx.lineWidth = 2;
-        const flowOffset = (time * 190) % 42;
-        for (let fx = gapLeft + 16; fx < gapRight - 10; fx += 24) {
-          const streakGrad = ctx.createLinearGradient(fx, netTop - 12, fx, netBottom + 16);
-          streakGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-          streakGrad.addColorStop(0.3, 'rgba(34, 211, 238, 0.7)');
-          streakGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.95)');
-          streakGrad.addColorStop(1, 'rgba(34, 211, 238, 0)');
-          ctx.strokeStyle = streakGrad;
-
-          for (let fy = netTop - 16 + flowOffset; fy < netBottom + 28; fy += 42) {
-            ctx.beginPath();
-            ctx.moveTo(fx, fy - 12);
-            ctx.lineTo(fx, fy + 8);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(fx - 4, fy + 3);
-            ctx.lineTo(fx, fy + 8);
-            ctx.lineTo(fx + 4, fy + 3);
-            ctx.stroke();
+          ctx.fillStyle = channelGrad;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(gapLeft - 2, netTop - 16, gapWidth + 4, netH + 32, 10);
+          } else {
+            ctx.rect(gapLeft - 2, netTop - 16, gapWidth + 4, netH + 32);
           }
+          ctx.fill();
         }
+
+        ctx.strokeStyle = `rgba(117, 244, 229, ${0.24 * gapPulse})`;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 8]);
+        ctx.strokeRect(gapLeft - 1, netTop - 10, gapWidth + 2, netH + 20);
+        ctx.setLineDash([]);
         ctx.restore();
 
         // RENDER GHOST NET MESH IN TWO WINGS
@@ -1584,6 +1600,10 @@ export default function App() {
         ctx.rect(gapRight, netTop, Math.max(0, h.x + h.width - gapRight), netH);
         ctx.clip();
 
+        ctx.fillStyle = 'rgba(3, 24, 35, 0.22)';
+        ctx.fillRect(h.x, netTop, Math.max(0, gapLeft - h.x), netH);
+        ctx.fillRect(gapRight, netTop, Math.max(0, h.x + h.width - gapRight), netH);
+        ctx.globalAlpha = 0.94;
         drawAsset(
           ctx,
           assets['hazard_net'],
@@ -1596,6 +1616,7 @@ export default function App() {
             fallbackCtx.fillRect(h.x, netTop, h.width, netH);
           },
         );
+        ctx.globalAlpha = 1;
 
         ctx.strokeStyle = 'rgba(15, 118, 110, 0.65)';
         ctx.lineWidth = 2;
@@ -1609,13 +1630,13 @@ export default function App() {
         ctx.restore();
 
         // TRADITIONAL CHINESE LABELS FOR NET & SAFE PASSAGE
-        if (isShowingLabels) {
+        if (isShowingLabels && h.id === frontNetId) {
           if (gapLeft > 120) {
             drawBadgeLabel(
               ctx,
               '🕸️ 幽靈漁網',
               h.x + gapLeft / 2,
-              netTop + netH + 16,
+              netTop + netH - 18,
               'rgba(255, 235, 235, 0.95)',
               '#991b1b',
               12,
@@ -1626,7 +1647,7 @@ export default function App() {
             ctx,
             '✨ 避險通道',
             gapLeft + gapWidth / 2,
-            netTop - 14,
+            netTop + 16,
             'rgba(236, 253, 245, 0.95)',
             '#065f46',
             12,
@@ -1912,8 +1933,9 @@ export default function App() {
           aspectRatio: `${canvasWidth} / ${canvasHeight}`,
           width: '100%',
           maxWidth: '560px',
-          height: '100%',
+          height: 'auto',
           maxHeight: '100vh',
+          flexShrink: 0,
         }}
         className="game-shell relative shadow-2xl flex items-center justify-center bg-slate-950 overflow-hidden">
         <canvas
