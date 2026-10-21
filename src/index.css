@@ -46,6 +46,10 @@ button {
 
 .game-shell {
   position: relative;
+  flex: 0 0 auto;
+  width: min(100%, 560px);
+  height: auto;
+  aspect-ratio: 3 / 4;
   isolation: isolate;
   background:
     radial-gradient(circle at 50% 0%, rgba(104, 244, 229, 0.11), transparent 35%),
