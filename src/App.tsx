@@ -1868,6 +1868,10 @@ export default function App() {
 
   // --- RAF GAME LOOP DRIVER ---
   useEffect(() => {
+    // Do not capture the initial empty asset dictionary. Starting the loop only
+    // after preloading guarantees the canvas render closure receives the images.
+    if (!assetsReady) return;
+
     let animationFrameId: number;
     let lastTime = performance.now();
 
@@ -1894,7 +1898,7 @@ export default function App() {
 
     animationFrameId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [canvasWidth, canvasHeight]);
+  }, [assets, assetsReady, canvasWidth, canvasHeight]);
 
   const targetSurvivalTime = getConfig('targetSurvivalTime') as number;
   const remainingSeconds = Math.max(0, targetSurvivalTime - (gameState.timer || 0));
