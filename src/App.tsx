@@ -52,19 +52,19 @@ import {
 } from './utils/usePlayground';
 
 // --- BACKGROUND MUSIC ---
-const BACKGROUND_MUSIC_URL = 'assets/audio/bgm_ocean_danger.mp3';
+const BACKGROUND_MUSIC_URL = '/assets/audio/bgm_ocean_danger.mp3';
 
 // --- ASSET MANIFEST ---
 const ASSETS_MANIFEST: Record<string, string> = {
-  player: 'assets/images/player_sea_turtle.png',
-  hazard_bag: 'assets/images/hazard_plastic_bag.png',
-  hazard_bottle: 'assets/images/hazard_glass_bottle.png',
-  hazard_straw: 'assets/images/hazard_plastic_straw.png',
-  hazard_net: 'assets/images/hazard_ghost_net.png',
-  safe_path: 'assets/images/current_safe_path.png',
-  item_shield: 'assets/images/item_bubble_shield.png',
-  item_jellyfish: 'assets/images/item_golden_jellyfish.png',
-  ui_heart: 'assets/images/ui_heart_icon.png',
+  player: '/assets/images/player_sea_turtle.png',
+  hazard_bag: '/assets/images/hazard_plastic_bag.png',
+  hazard_bottle: '/assets/images/hazard_glass_bottle.png',
+  hazard_straw: '/assets/images/hazard_plastic_straw.png',
+  hazard_net: '/assets/images/hazard_ghost_net.png',
+  safe_path: '/assets/images/current_safe_path.png',
+  item_shield: '/assets/images/item_bubble_shield.png',
+  item_jellyfish: '/assets/images/item_golden_jellyfish.png',
+  ui_heart: '/assets/images/ui_heart_icon.png',
 };
 
 // --- TYPES & INTERFACES ---
@@ -1955,7 +1955,7 @@ export default function App() {
                 {Array.from({length: getConfig('startingHealth') as number}).map((_, idx) => (
                   <img
                     key={idx}
-                    src="assets/images/ui_heart_icon.png"
+                    src="/assets/images/ui_heart_icon.png"
                     alt={idx < gameState.lives ? '生命值' : '失去的生命值'}
                     className={idx < gameState.lives ? 'hud-heart opacity-100 scale-100' : 'hud-heart hud-heart--empty scale-75'}
                   />
@@ -2149,7 +2149,7 @@ export default function App() {
           <div className="ocean-panel p-6 md:p-8 rounded-3xl flex flex-col items-center w-full max-w-md text-center">
             <div className="pulse-ring w-20 h-20 mb-3 relative flex items-center justify-center rounded-full">
               <img
-                src="assets/images/player_sea_turtle.png"
+                src="/assets/images/player_sea_turtle.png"
                 alt="海龜"
                 className="w-20 h-20 object-contain drop-shadow-lg animate-bounce"
               />

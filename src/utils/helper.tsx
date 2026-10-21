@@ -830,6 +830,7 @@ export function useAssets(manifest: Record<string, string>) {
     {},
   );
   const [isReady, setIsReady] = useState(false);
+  const [failedAssets, setFailedAssets] = useState<string[]>([]);
 
   // Stringify the manifest to prevent infinite re-renders if an inline object is passed
   const manifestStr = JSON.stringify(manifest);
@@ -837,46 +838,74 @@ export function useAssets(manifest: Record<string, string>) {
   useEffect(() => {
     const currentManifest = JSON.parse(manifestStr) as Record<string, string>;
     const urls = Object.entries(currentManifest);
+    let cancelled = false;
+
+    setAssets({});
+    setFailedAssets([]);
+    setIsReady(false);
+
     if (urls.length === 0) {
       setIsReady(true);
       return;
     }
 
-    let loadedCount = 0;
-    const loadedAssets: Record<string, HTMLImageElement | null> = {};
+    const loadImage = (url: string): Promise<HTMLImageElement | null> =>
+      new Promise((resolve) => {
+        const resolvedUrl = new URL(url, document.baseURI).toString();
+        const isCrossOrigin =
+          typeof window !== 'undefined' &&
+          new URL(resolvedUrl).origin !== window.location.origin;
+        const attempts = isCrossOrigin ? [true, false] : [false];
+        let attempt = 0;
 
-    urls.forEach(([id, url]) => {
-      const img = new Image();
-      let retriedWithoutCors = false;
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        loadedAssets[id] = img; // Keyed by manifest ID for easy lookup
-        loadedCount++;
-        if (loadedCount === urls.length) {
-          setAssets(loadedAssets);
-          setIsReady(true);
-        }
-      };
-      img.onerror = () => {
-        if (!retriedWithoutCors) {
-          retriedWithoutCors = true;
-          img.removeAttribute('crossorigin');
-          img.src = url;
-          return;
-        }
-        console.warn(`[AssetPreloader] Failed to load asset: ${id} at ${url}`);
-        loadedAssets[id] = null;
-        loadedCount++;
-        if (loadedCount === urls.length) {
-          setAssets(loadedAssets);
-          setIsReady(true);
-        }
-      };
-      img.src = url;
+        const startAttempt = () => {
+          // Use a fresh Image for each attempt. Reassigning the same src after
+          // an error is not guaranteed to trigger a second request in browsers.
+          const img = new Image();
+          if (attempts[attempt]) img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => {
+            attempt += 1;
+            if (attempt < attempts.length) {
+              startAttempt();
+            } else {
+              resolve(null);
+            }
+          };
+          img.src = resolvedUrl;
+        };
+
+        startAttempt();
+      });
+
+    Promise.all(
+      urls.map(async ([id, url]) => [id, await loadImage(url)] as const),
+    ).then((results) => {
+      if (cancelled) return;
+
+      const loadedAssets: Record<string, HTMLImageElement | null> = {};
+      const failed = results.filter(([, image]) => !image).map(([id]) => id);
+      results.forEach(([id, image]) => {
+        loadedAssets[id] = image;
+      });
+
+      setAssets(loadedAssets);
+      setFailedAssets(failed);
+      setIsReady(true);
+
+      if (failed.length > 0) {
+        console.warn('[AssetPreloader] Failed assets:', failed);
+      } else {
+        console.info(`[AssetPreloader] Loaded ${results.length} assets.`);
+      }
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [manifestStr]);
 
-  return {assets, isReady};
+  return {assets, isReady, failedAssets};
 }
 
 /**
